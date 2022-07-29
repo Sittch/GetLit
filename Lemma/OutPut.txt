@@ -1,0 +1,1 @@
+The percent of known from the text: DeBelloGallicoTEST.txtLemma.txt is: 0.8781431334622823
