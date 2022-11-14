@@ -2,6 +2,7 @@ from fileinput import filename
 from transformers import AutoTokenizer, AutoModelForTokenClassification
 import torch
 from tqdm import tqdm
+import os
 
 import re
 
@@ -16,8 +17,11 @@ def preprocessing(file_name, out_file, proper_nouns_list, tokenizer, model):
   # proper_nouns_file = "proper_nouns_names.txt"
   # proper_nouns_list = open(proper_nouns_file).read().lower().splitlines()
   in_file = open(file_name, 'r')
+  
   input_file = in_file.read().splitlines()
-  out_file = open(out_file, 'w')
+
+  # with open(os.path.join('/path/to/Documents',completeName), "w") as file1:
+  out_file = open(os.path.join('/home/paul/DeepL/Final/POST',out_file), 'w')
   for i, line in enumerate(tqdm(input_file)): 
     # Checking if it not an empty line
     if(len(line) > 0):

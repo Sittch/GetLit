@@ -9,11 +9,11 @@ import os
 
 tokenizer = AutoTokenizer.from_pretrained("wietsedv/xlm-roberta-base-ft-udpos28-la")
 model = AutoModelForTokenClassification.from_pretrained("wietsedv/xlm-roberta-base-ft-udpos28-la")
-os.chdir('/home/paul/Data Minining/Nouns')
+os.chdir('/home/paul/DeepL/Final/Nouns')
 proper_nouns_file = "proper_nouns_names.txt"
 proper_nouns_list = open(proper_nouns_file).read().lower().splitlines()
 
-os.chdir('/home/paul/Data Minining')
+os.chdir('/home/paul/DeepL/Final/Examp')
 
 for txt in list(glob.glob("*.txt")):
 
@@ -21,7 +21,7 @@ for txt in list(glob.glob("*.txt")):
     X = f"{txt}_preprocessed.txt"
     preprocessing(txt, X, proper_nouns_list, tokenizer, model)
 
-    with open (X, "r") as f:
+    with open(os.path.join('/home/paul/DeepL/Final/POST',X), "r") as f:
         file_1_str = f.read()
 
     file_1_str = " ".join(file_1_str.splitlines())
@@ -40,11 +40,21 @@ for txt in list(glob.glob("*.txt")):
     import sys
     sys.setrecursionlimit(100000)
 
+    print("HELLO!")
+    import gc
+
+    gc.collect()
+
+    torch.cuda.empty_cache()
     # Commented out IPython magic to ensure Python compatibility.
-    cltk_doc1 = cltk_nlp.analyze(text=file_1_str)
+    cltk_doc1 = cltk_nlp.analyze(text=file_1_str[:4000])
 
     #cltk_doc1.lemmata[:100]
-    cltk_doc1.words[0].lemma
+    # cltk_doc1.words[0].lemma
+
+    # print(cltk_doc1)
+
+    # sys.exit()
 
     def lemma_count(words):
         lemma_dict = {}
@@ -83,12 +93,14 @@ for txt in list(glob.glob("*.txt")):
     #add lemma counts together, if two tuples have the same lemma, add the counts to one, and remove the other
     #we then have the corpus
 
+
     lemma_counts = lemma_count(cltk_doc1.words)
 
-    with open(os.path.join('/home/paul/Data Minining/Lemma',f'{txt}Lemma.txt'), "w") as f:
+    with open(os.path.join('/home/paul/DeepL/Final/Lemma',f'{txt}Lemma.txt'), "w") as f:
         for t in lemma_counts:   
             f.write(' '.join(str(s) for s in t) + '\n')
 
+    # os.chdir('/home/paul/DeepL/Final/Examp')
     # textfile = open(f'{txt}Lemma.txt', 'w')
     # f=textfile
 
@@ -97,10 +109,10 @@ for txt in list(glob.glob("*.txt")):
 
     # f.close()
 
-os.chdir('/home/paul/Data Minining/UserVocab')
+os.chdir('/home/paul/DeepL/Final/profiles')
 
 
-FileName = input("Enter your vocab file list : ")
+# FileName = input("Enter your vocab file list : ")
 # my_file = open(FileName, "r")#For user input
 my_file = open("Wheelock.txt", "r")
     
@@ -109,7 +121,7 @@ memory = [line.strip() for line in data]
 
 my_file.close()
 
-os.chdir('/home/paul/Data Minining/Lemma')
+os.chdir('/home/paul/DeepL/Final/Lemma')
 
 for txt in glob.glob("*Lemma.txt"):
     
