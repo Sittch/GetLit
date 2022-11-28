@@ -1,16 +1,17 @@
 import numpy as np
 import pandas as pd
-import preprocessing
+import os
 
-data= pd.read_csv('LatLibFakeRankings.csv', encoding= 'latin_1')
+# data= pd.read_csv('LatLibFakeRankings.csv', encoding= 'latin_1')
+data= pd.read_csv('Rank.csv', encoding= 'latin_1')
 
 # data.drop(['Unnamed: 2','Unnamed: 3','Unnamed: 4'], axis=1, inplace=True)
 data.rename(columns={'V1': 'Text', 'V2': 'Target'}, inplace=True)
 
 data['Target']=data['Target'].map({'Easy': 0, 'Medium': 1, 'Hard': 2})
-print(data.head())
 
-
+data = data.loc[:10]
+# print(data)
 
 from keras.preprocessing.text import Tokenizer
 from keras_preprocessing.sequence import pad_sequences
@@ -22,11 +23,18 @@ print("number of texts :" , len(texts))
 print("number of labels: ", len(labels))
 
 
-print(texts)
+print(texts[0])
 
+# os.chdir('/home/paul/DeepL/Final/POST')
+os.chdir('/home/paul/DeepL/Final/LatLib-Flat')
 
-import sys
-sys.exit()
+for i in range(len(texts)):
+    with open(texts[i],'r') as f:
+        New_texts = f.read().splitlines()
+    texts[i] = New_texts
+        
+# print(texts[0])
+
 
 tokenizer = Tokenizer()
 tokenizer.fit_on_texts(texts)
@@ -45,12 +53,14 @@ print("data shape: ", seqs.shape)
 
 #10. Read the embeddings in the pretrained model 
 
-import os
+# import sys
+# sys.exit()
+
 # path_to_glove_file = "glove.6B.100d.txt"
-path_to_glove_file = '/content/drive/My Drive/DeepL/Email_spam/glove.6B.100d.txt'
+path_to_word2vec_file = '/home/paul/DeepL/Final/Word2Vec.vec'
 
 embeddings_index = {}
-with open(path_to_glove_file) as f:
+with open(path_to_word2vec_file) as f:
     for line in f:
         word, coefs = line.split(maxsplit=1)
         coefs = np.fromstring(coefs, "f", sep=" ")
@@ -59,7 +69,7 @@ with open(path_to_glove_file) as f:
 print("Found %s word vectors." % len(embeddings_index))
 
 
-embedding_matrix = np.zeros((vocab_size, 100))
+embedding_matrix = np.zeros((vocab_size, 300))
 for word, i in tokenizer.word_index.items():
     embedding_vector = embeddings_index.get(word)
     if embedding_vector is not None:
@@ -77,6 +87,12 @@ X_train, x_test, Y_train, y_test = train_test_split(seqs, labels, test_size=0.3,
 from tensorflow import keras
 from tensorflow.keras.models import Sequential
 from keras.layers import Embedding, Dense, Dropout, LSTM, SimpleRNN, GRU
+
+from keras.models import Sequential
+from keras.layers import Dense, Flatten
+# from keras.layers.embeddings import Embedding
+
+from keras import layers, Input, Model
 
 
 from keras import backend as K
@@ -103,22 +119,7 @@ from sklearn.metrics import confusion_matrix, classification_report
 
 
 def gen_conf_matrix(model, x_test, y_test):
-    # classes=[0,1]
-    # y_true = y_test
-    # y_pred=model.predict(x_test)
-    # con_mat = tf.math.confusion_matrix(labels=y_true, predictions=y_pred).numpy()
-    # con_mat_norm = np.around(con_mat.astype('float') / con_mat.sum(axis=1)[:, np.newaxis], decimals=2)
 
-    # con_mat_df = pd.DataFrame(con_mat_norm,
-    #                     index = classes, 
-    #                     columns = classes)
-
-    # figure = plt.figure(figsize=(8, 8))
-    # sns.heatmap(con_mat_df, annot=True,cmap=plt.cm.Blues)
-    # plt.tight_layout()
-    # plt.ylabel('True label')
-    # plt.xlabel('Predicted label')
-    # plt.show()
     p_pred = model.predict(x_test)
     p_pred = p_pred.flatten()
     # print(p_pred.round(2))
@@ -135,13 +136,8 @@ def gen_conf_matrix(model, x_test, y_test):
 
 # define the model LSTM
 
-EMBEDDING_SIZE = 100
+EMBEDDING_SIZE = 300
 
-# model = Sequential()
-# model.add(Embedding(vocab_size, EMBEDDING_SIZE, weights=[embedding_matrix], input_length=20, trainable=False))
-# model.add(SimpleRNN(EMBEDDING_SIZE, input_shape=(X_train.shape[1],1)))
-# model.add(Dropout(0.3))
-# model.add(Dense(1, activation='sigmoid'))
 
 from keras.models import Sequential
 from keras.layers import Dense, Flatten
@@ -157,10 +153,12 @@ embedding_layer = Embedding(vocab_size, EMBEDDING_SIZE,
 
 int_sequences_input = Input(shape=(None,), dtype="int64")
 embedded_sequences = embedding_layer(int_sequences_input)
-x = layers.Bidirectional(layers.LSTM(20, return_sequences=True))(embedded_sequences)
-x = layers.Bidirectional(layers.LSTM(20))(x)
+x = layers.Bidirectional(layers.LSTM(120, return_sequences=True))(embedded_sequences)
+x = layers.Bidirectional(layers.LSTM(120))(x)
+# before = layers.Dense(20, activation="relu")(x)
 preds = layers.Dense(1, activation="sigmoid")(x)
 model = Model(int_sequences_input, preds)
+
 
 # summarize the model
 model.summary()
@@ -170,10 +168,8 @@ model.compile(loss = 'binary_crossentropy', optimizer ='adam',metrics = ["accura
 from keras.callbacks import ModelCheckpoint
 filepath = "LSTM_EM_model.h1"
 checkpoint = ModelCheckpoint(filepath, monitor = "loss", mode = "min", verbose =1, save_best_only = True)
-#print(len(tokenizer.word_index)+1)
-#print(X_train.shape)
-#print(Y_train.shape)
-history = model.fit(X_train, Y_train, epochs = 5, batch_size = 100, callbacks = [checkpoint])
+
+history = model.fit(X_train, Y_train, epochs = 10, batch_size = 100, callbacks = [checkpoint])
 
 #Full
 print("Score of the total test data")
